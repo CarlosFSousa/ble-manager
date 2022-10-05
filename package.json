@@ -1,5 +1,11 @@
 {
+  "name": "BLE Gate",
+  "version": "1.0.0",
+  "author": "Carlos F Sousa",
   "devDependencies": {
     "@types/web-bluetooth": "^0.0.15"
+  },
+  "dependencies": {
+    "typescript": "^4.8.4"
   }
 }

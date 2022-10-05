@@ -10,46 +10,43 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 class BleConnection {
     constructor() {
-        this.filtersElement = document.getElementById('filters');
-        this.current_device = null;
-    }
-    scanFilteredDevices(filters) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function* () {
-            let options = {};
-            const services = { services: filters };
-            console.log(services);
-            // options.filters = [services];
-            options.acceptAllDevices = true;
-            if (((_a = this.filtersElement) === null || _a === void 0 ? void 0 : _a.value) === '') {
-                alert('Filters can not be empty');
-                return;
+        this.scanFilteredDevices = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const options = {};
+                // options.filters = [{services:0x180a}]
+                options.acceptAllDevices = true;
+                this.printLog('Requesting BLE Device');
+                this.printLog(`Options: ${JSON.stringify(options)}`);
+                const device = yield navigator.bluetooth.requestDevice(options);
+                this.current_device = device;
+                device.addEventListener('gattserverdisconnected', this.onDisconnected);
+                this.printLog('Getting Service');
+                const server = yield device.getPrimaryService('');
+                this.printLog('Getting gate on open characteritic');
+                const service = yield server.getCharacteristic();
+                this.printLog('Writing gate open command');
+                yield service.writeValue();
+                this.printLog('Characteristic written');
+                this.current_device.gatt.disconnect();
             }
-            return yield navigator.bluetooth.requestDevice(options);
+            catch (error) {
+                this.printLog(`Error: ${error}`);
+            }
         });
-    }
-    createTable() {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this.filtersElement === null)
-                return;
-            const filtersArray = this.filtersElement.value.split(',');
-            const newAr = filtersArray.map((item) => parseInt(item) ? parseInt(item) : item);
-            return yield this.scanFilteredDevices(newAr);
-        });
+        this.onDisconnect = (e) => {
+            const device = e.target;
+            console.log(`Device ${device.name} disconnected`);
+        };
+        this.printLog = (message) => {
+            var myDiv = document.getElementById('log');
+            var p = document.createElement('p');
+            if (message.includes('Error'))
+                p.className = 'red';
+            p.textContent = message;
+            myDiv === null || myDiv === void 0 ? void 0 : myDiv.append(p);
+        };
     }
 }
-const scan = () => __awaiter(void 0, void 0, void 0, function* () {
-    const bleConnection = new BleConnection();
-    const device = yield bleConnection.createTable();
-    bleConnection.current_device = device;
-    toggle(device);
-});
-const toggle = (device) => {
-    const inputGroup = document.getElementById('scan');
-    const table = document.getElementById('table');
-    inputGroup.style.display = 'none';
-    table.style.display = 'block';
-    table.console.log(device);
-};
-const button = document.querySelector('#start_scan');
-button === null || button === void 0 ? void 0 : button.addEventListener('click', scan);
+const connection = new BleConnection();
+const button = document.getElementById('start_scan');
+button === null || button === void 0 ? void 0 : button.addEventListener('click', connection.scanFilteredDevices);

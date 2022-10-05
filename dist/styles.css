@@ -1,15 +1,17 @@
 .title {
-    margin: 5rem;
+    margin: 2rem;
     display: flex;
     justify-content: center;
 }
 
 .main {
-    margin: 5rem;
     display: flex;
     justify-content: center;
 }
 
 #rescan {
     width:100%;
+}
+.red {
+    color:red;
 }
