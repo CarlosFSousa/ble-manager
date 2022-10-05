@@ -9,20 +9,28 @@ class BleConnection {
   scanFilteredDevices = async () => {
     try {
       const options: any = {};
-      // options.filters = [{services:0x180a}]
-      options.acceptAllDevices = true;
+      // options.filters = [{ services: 0x1800 }];
+      (options.optionalServices = ['']), (options.acceptAllDevices = true);
       this.printLog('Requesting BLE Device');
       this.printLog(`Options: ${JSON.stringify(options)}`);
       const device: any = await navigator.bluetooth.requestDevice(options);
       this.current_device = device;
       device.addEventListener('gattserverdisconnected', this.onDisconnected);
-      this.printLog('Getting Service');
-      const server = await device.getPrimaryService('');
-      this.printLog('Getting gate on open characteritic');
-      const service = await server.getCharacteristic();
-      this.printLog('Writing gate open command');
-      await service.writeValue();
-      this.printLog('Characteristic written');
+      const server = await device.gatt.connect();
+      console.log(server);
+      // const characteristics = await server.getCharacteristics();
+      // console.log(characteristics);
+      // this.printLog('Getting Service');
+      // const service = await server.getPrimaryService(0x180f);
+      // console.log(service);
+      // this.printLog('Opening characteristic');
+      // const characteristic = await service.getCharacteristic(0x2a19);
+      // console.log(characteristic);
+      // this.printLog(`Value: ${characteristic[0].value}`);
+      // this.printLog('Writing gate open command');
+      // const value = await characteristic.writeValue();
+      // console.log(value);
+      // this.printLog('Characteristic written');
       this.current_device.gatt.disconnect();
     } catch (error) {
       this.printLog(`Error: ${error}`);
