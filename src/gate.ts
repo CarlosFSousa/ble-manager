@@ -10,7 +10,8 @@ class BleConnection {
     try {
       const options: any = {};
       // options.filters = [{ services: 0x1800 }];
-      (options.optionalServices = ['']), (options.acceptAllDevices = true);
+      (options.optionalServices = ['00002a19-0000-1000-8000-00805f9b34fb']),
+        (options.acceptAllDevices = true);
       this.printLog('Requesting BLE Device');
       this.printLog(`Options: ${JSON.stringify(options)}`);
       const device: any = await navigator.bluetooth.requestDevice(options);
