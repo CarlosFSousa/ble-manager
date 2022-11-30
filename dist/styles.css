@@ -4,14 +4,29 @@
     justify-content: center;
 }
 
-.main {
-    display: flex;
-    justify-content: center;
-}
-
 #rescan {
     width:100%;
 }
 .red {
     color:red;
+}
+
+  .footer {
+    margin-top: 5rem;
+    height: 200px;
+    display: flex;
+  }
+#log {
+    overflow-y: auto;
+    min-width: 650px;
+}
+
+#list_files {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    column-gap: 10px;
+    row-gap: 15px;
+    /* flex-wrap: wrap; */
+    margin-top: 5rem;
+
 }

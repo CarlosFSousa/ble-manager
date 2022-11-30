@@ -2,34 +2,56 @@
     <title>BLE</title>
     <!-- CSS only -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+        integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-<div class="container">
-    <div class="title">
-        <h1>BLE Scanner</h1>
-    </div>
-    <div class="main">
-        <button class="btn btn-outline-secondary" id="start_scan">Scan</button>
-    </div>
-    <div id="log"></div>
-    <!-- <div class="input-group mb-3" id="scan">
+    <main role="main" class="container">
+        <div class="title">
+            <h1>BLE Scanner</h1>
+        </div>
+        <div class="content" id="initial-screen">
+            <div class="alert alert-primary" role="alert" id="bluetooth-is-available">
+                <b><span id="bluetooth-is-available-message"></span></b>
+                This tool is compatible with desktops (or laptops) with the <b>latest Chrome, Opera and Edge</b>
+                browsers and working
+                Bluetooth connection.
+            </div>
+            <div id="connect-block" style="display: none;">
+                <div class="form-group form-inline">
+                    <!-- <div class="col-auto">
+                        <input id="device-name-input" type="text" class="form-control" id="device-name-input"
+                            placeholder="Device name (optional)">
+                    </div> -->
+                    <div class="col-auto">
+                        <button id="start_scan" type="submit" class="btn btn-primary"><i class="bi-bluetooth"></i>
+                            Connect</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button id="disconnect" class="btn btn-danger" style="display: none;">Disconnect</button>
+        <div id="list_files"></div>
+        <div class="footer">
+            <div id="log"></div>
+        </div>
+        <!-- <div class="input-group mb-3" id="scan">
         <input id="filters" type="text" class="form-control" placeholder="Filtered Services"
             aria-label="Filtered Services">
         <div class="input-group-append">
             <button id="start_scan" class="btn btn-outline-secondary" type="button">Scan</button>
         </div>
     </div> -->
-    <div class="image">
+        <!-- <div class="image">
         <div class="form-group">
             <div id="file-status">Select image file (.img)</div>
             <div id="file-info"></div>
         </div>
         <button class="btn btn-primary" id="file-upload" disabled><i class="bi-upload"></i> Upload</button>
-    </div>
+    </div> -->
 
-</div>
+
+    </main>
 </body>
 <script src="ble.js"></script>

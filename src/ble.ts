@@ -1,74 +1,158 @@
-interface BleConnection {
-  current_device: any;
-  scanFilteredDevices(): Promise<void>;
-  onDisconnected(): void;
-  printLog(message: string): void;
-}
+// Carlos Fontes e Sousa 22
 
 class BleConnection {
-  service = 'dbd00001-ff30-40a5-9ceb-a17358d31999';
+  current_device: any = null;
+  _device: any = null;
+  _service: BluetoothRemoteGATTService | any = null;
+  _characteristic: BluetoothRemoteGATTCharacteristic | any = null;
+  SERVICE_UUID: String = 'dbd00001-ff30-40a5-9ceb-a17358d31999';
+  CHARACTERISTIC_UUID: String = 'dbd00010-ff30-40a5-9ceb-a17358d31999';
 
+  connect = async () => {
+    try {
+      this._device = await this._requestDevice([{ name: 'DVBdiver' }]);
+      this.printLog('Device Connected');
+      this._device.addEventListener(
+        'gattserverdisconnected',
+        async (event: any) => {
+          console.log(event);
+          connectButton.style.display = 'block';
+          disconnectButton.style.display = 'none';
+        }
+      );
+      const connection: any = await this._device.gatt.connect();
+      this._service = await connection.getPrimaryService(this.SERVICE_UUID);
+      this.printLog('Service Connected');
+      this._characteristic = await this._service.getCharacteristic(
+        this.CHARACTERISTIC_UUID
+      );
+    } catch (error) {
+      this.printLog(`Error: ${error}`);
+      this.disconnect();
+    }
+  };
+
+  disconnect = () => {
+    this._device.gatt.disconnect();
+    this._device = null;
+    this._service = null;
+    this._characteristic = null;
+  };
+
+  _requestDevice = (filters: any) => {
+    const params: any = {
+      acceptAllDevices: true,
+      optionalServices: [this.SERVICE_UUID],
+    };
+    if (filters) {
+      params.filters = filters;
+      params.acceptAllDevices = false;
+    }
+    return navigator.bluetooth.requestDevice(params);
+  };
+
+  displayFiles = async () => {
+    while (true) {
+      const value: any = await this._characteristic.readValue();
+      const message: any = new Uint8Array(value.buffer);
+      if (message.byteLength === 0) return;
+      let str = '';
+      for (let i = 0; i < message.byteLength; i++) {
+        str += String.fromCharCode(message[i]);
+      }
+      generateBoxes(str);
+    }
+  };
   scanFilteredDevices = async () => {
     try {
       this.printLog('Requesting BLE connection');
-      // Requests connection to ble device
-      // filtered by name, optionalServices are needed in order to call in getPrimaryService()
-      const device: BluetoothDevice = await navigator.bluetooth.requestDevice({
-        filters: [{ name: 'DVBdiver' }],
-        optionalServices: [this.service],
+      await this.connect();
+      this.current_device = this._device;
+      await this.displayFiles();
+      disconnectButton.addEventListener('click', () => {
+        this.current_device.gatt.disconnect();
+        this.printLog('Device disconnected');
       });
-      this.current_device = device;
-      // Connects device
-      const connection: any = await device.gatt?.connect();
-      this.printLog('Device connected');
-      // Gets primary by uuid
-      const service: BluetoothRemoteGATTService =
-        await connection.getPrimaryService(this.service);
-      this.printLog(`Service UUID: ${service.uuid}`);
-      console.log(service);
-      // Lists all characteristics found in the service
-      const characteristics: BluetoothRemoteGATTCharacteristic[] =
-        await service.getCharacteristics();
-      this.printLog(
-        `Number of characteristics found: ${characteristics.length}`
-      );
-      console.log(characteristics);
-      characteristics.forEach((c) => {
-        this.printLog(`Chracteristic UUID: ${c.uuid}`);
-      });
-
-      // Value from one of the characteristics
-      const value: DataView | any = await characteristics[6]?.readValue();
-      console.log(value);
-      // converted the value to uint8
-      const message: any = new Uint8Array(value.buffer);
-      let myString = '';
-      for (let i = 0; i < message.byteLength; i++) {
-        myString += String.fromCharCode(message[i]);
-      }
-      this.printLog(`Filename: ${myString}`);
-      // this.printLog(`Value: ${data}`);
-      // Needs array buffer to write
-      // await characteristic[3].writeValue(buffer);
-      // Disconnects device
-      this.current_device.gatt.disconnect();
-      this.printLog('Device disconnected');
+      this.connected();
     } catch (error) {
       this.printLog(`Error - ${error}`);
     }
   };
-  pad = (n: any) => {
-    return n.length < 2 ? '0' + n : n;
+
+  connected = () => {
+    connectButton.style.display = 'none';
+    disconnectButton.style.display = 'block';
   };
+
   printLog = (message: string) => {
-    var myDiv = document.getElementById('log');
-    var p = document.createElement('p');
+    var myDiv: any = document.getElementById('log');
+    var p: any = document.createElement('p');
     if (message.includes('Error')) p.className = 'red';
-    p.textContent = message;
-    myDiv?.append(p);
+    const now = new Date();
+    const date = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+    const time = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+    p.textContent = `${date} ${time} - ${message}`;
+    myDiv.append(p);
+    if (myDiv.textContent.trim() !== '') {
+      myDiv.style.border = '1px solid black';
+    }
   };
 }
+// ******************************* End of class ********************************
 
+const bluetoothIsAvailable: any = document.getElementById(
+  'bluetooth-is-available'
+);
+const bluetoothIsAvailableMessage: any = document.getElementById(
+  'bluetooth-is-available-message'
+);
+const connectBlock: any = document.getElementById('connect-block');
+
+const checkBluetoothAvailability = async () => {
+  if (
+    navigator &&
+    navigator.bluetooth &&
+    (await navigator.bluetooth.getAvailability())
+  ) {
+    bluetoothIsAvailableMessage.innerText =
+      'Bluetooth is available in your browser.';
+    bluetoothIsAvailable.className = 'alert alert-success';
+    connectBlock.style.display = 'block';
+  } else {
+    bluetoothIsAvailable.className = 'alert alert-danger';
+    bluetoothIsAvailableMessage.innerText =
+      'Bluetooth is not available in your browser.';
+  }
+};
+
+const generateBoxes = (name: string) => {
+  console.log(name);
+  const list_files: any = document.getElementById('list_files');
+  const card: any = document.createElement('div');
+  card.className = 'card';
+  card.style.width = '18rem';
+  // card.id = name;
+  const card_body: any = document.createElement('div');
+  card_body.className = 'card-body';
+  const h6: any = document.createElement('h6');
+  h6.innerText = name;
+  h6.className = 'card-title';
+  const text: any = document.createElement('p');
+  text.style.display = 'none';
+  text.className = 'card-text';
+  const button: any = document.createElement('button');
+  button.className = 'btn btn-success';
+  button.textContent = 'Download';
+
+  card_body.appendChild(h6);
+  card_body.appendChild(text);
+  card_body.appendChild(button);
+  card.appendChild(card_body);
+  list_files.appendChild(card);
+};
+
+checkBluetoothAvailability();
+const connectButton: any = document.querySelector('#start_scan');
+const disconnectButton: any = document.querySelector('#disconnect');
 const connection = new BleConnection();
-const button = document.getElementById('start_scan');
-button?.addEventListener('click', connection.scanFilteredDevices);
+connectButton.addEventListener('click', connection.scanFilteredDevices);
