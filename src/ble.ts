@@ -109,11 +109,11 @@ class BleConnection {
     const h6: HTMLElement = document.createElement('h6');
     h6.innerText = name;
     h6.className = 'card-title';
-    const link_container: HTMLElement = document.createElement('div');
-    link_container.className = 'card-text';
+    // const link_container: HTMLElement = document.createElement('div');
+    // link_container.className = 'card-text';
 
-    const link: HTMLAnchorElement = document.createElement('a');
-    link.id = name;
+    // const link: HTMLAnchorElement = document.createElement('a');
+    // link.id = name;
 
     const button: HTMLElement = document.createElement('button');
     button.className = 'btn btn-success';
@@ -121,16 +121,18 @@ class BleConnection {
     button.setAttribute('name', name);
     button.addEventListener('click', (e: any) => {
       const id = e.srcElement.name;
-      const target: HTMLElement = document.getElementById(`${id}`);
-      target.innerText = id;
+      // const target: HTMLElement = document.getElementById(`${id}`);
+      // target.innerText = id;
       const blob = new Blob([byteArray]);
+      const link = document.createElement('a');
       link.href = window.URL.createObjectURL(blob);
       link.download = id;
+      link.click();
     });
 
-    link_container.appendChild(link);
-    card_body.appendChild(link_container);
     card_body.appendChild(h6);
+    // link_container.appendChild(link);
+    // card_body.appendChild(link_container);
     card_body.appendChild(button);
     card.appendChild(card_body);
     list_files.appendChild(card);
