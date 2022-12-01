@@ -3,8 +3,8 @@
 class BleConnection {
   current_device: any = null;
   _device: any = null;
-  _service: BluetoothRemoteGATTService | any = null;
-  _characteristic: BluetoothRemoteGATTCharacteristic | any = null;
+  _service: any = null;
+  _characteristic: any = null;
   SERVICE_UUID: String = 'dbd00001-ff30-40a5-9ceb-a17358d31999';
   CHARACTERISTIC_UUID: String = 'dbd00010-ff30-40a5-9ceb-a17358d31999';
 
@@ -48,6 +48,7 @@ class BleConnection {
       params.filters = filters;
       params.acceptAllDevices = false;
     }
+    //@ts-ignore
     return navigator.bluetooth.requestDevice(params);
   };
 
@@ -56,11 +57,11 @@ class BleConnection {
       const value: any = await this._characteristic.readValue();
       const message: any = new Uint8Array(value.buffer);
       if (message.byteLength === 0) return;
-      let str = '';
+      let name = '';
       for (let i = 0; i < message.byteLength; i++) {
-        str += String.fromCharCode(message[i]);
+        name += String.fromCharCode(message[i]);
       }
-      generateBoxes(str);
+      this.generateBoxes(name, message);
     }
   };
   scanFilteredDevices = async () => {
@@ -85,8 +86,8 @@ class BleConnection {
   };
 
   printLog = (message: string) => {
-    var myDiv: any = document.getElementById('log');
-    var p: any = document.createElement('p');
+    const myDiv: any = document.getElementById('log');
+    const p: any = document.createElement('p');
     if (message.includes('Error')) p.className = 'red';
     const now = new Date();
     const date = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
@@ -96,6 +97,43 @@ class BleConnection {
     if (myDiv.textContent.trim() !== '') {
       myDiv.style.border = '1px solid black';
     }
+  };
+
+  generateBoxes = (name: string, byteArray: any) => {
+    const list_files: HTMLElement = document.getElementById('list_files');
+    const card: HTMLElement = document.createElement('div');
+    card.className = 'card';
+    card.style.width = '18rem';
+    const card_body: HTMLElement = document.createElement('div');
+    card_body.className = 'card-body';
+    const h6: HTMLElement = document.createElement('h6');
+    h6.innerText = name;
+    h6.className = 'card-title';
+    const link_container: HTMLElement = document.createElement('div');
+    link_container.className = 'card-text';
+
+    const link: HTMLAnchorElement = document.createElement('a');
+    link.id = name;
+
+    const button: HTMLElement = document.createElement('button');
+    button.className = 'btn btn-success';
+    button.textContent = 'Download';
+    button.setAttribute('name', name);
+    button.addEventListener('click', (e: any) => {
+      const id = e.srcElement.name;
+      const target: HTMLElement = document.getElementById(`${id}`);
+      target.innerText = id;
+      const blob = new Blob([byteArray]);
+      link.href = window.URL.createObjectURL(blob);
+      link.download = id;
+    });
+
+    link_container.appendChild(link);
+    card_body.appendChild(link_container);
+    card_body.appendChild(h6);
+    card_body.appendChild(button);
+    card.appendChild(card_body);
+    list_files.appendChild(card);
   };
 }
 // ******************************* End of class ********************************
@@ -111,7 +149,9 @@ const connectBlock: any = document.getElementById('connect-block');
 const checkBluetoothAvailability = async () => {
   if (
     navigator &&
+    //@ts-ignore
     navigator.bluetooth &&
+    //@ts-ignore
     (await navigator.bluetooth.getAvailability())
   ) {
     bluetoothIsAvailableMessage.innerText =
@@ -123,32 +163,6 @@ const checkBluetoothAvailability = async () => {
     bluetoothIsAvailableMessage.innerText =
       'Bluetooth is not available in your browser.';
   }
-};
-
-const generateBoxes = (name: string) => {
-  console.log(name);
-  const list_files: any = document.getElementById('list_files');
-  const card: any = document.createElement('div');
-  card.className = 'card';
-  card.style.width = '18rem';
-  // card.id = name;
-  const card_body: any = document.createElement('div');
-  card_body.className = 'card-body';
-  const h6: any = document.createElement('h6');
-  h6.innerText = name;
-  h6.className = 'card-title';
-  const text: any = document.createElement('p');
-  text.style.display = 'none';
-  text.className = 'card-text';
-  const button: any = document.createElement('button');
-  button.className = 'btn btn-success';
-  button.textContent = 'Download';
-
-  card_body.appendChild(h6);
-  card_body.appendChild(text);
-  card_body.appendChild(button);
-  card.appendChild(card_body);
-  list_files.appendChild(card);
 };
 
 checkBluetoothAvailability();

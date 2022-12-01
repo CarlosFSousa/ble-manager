@@ -19,6 +19,7 @@
 #log {
     overflow-y: auto;
     min-width: 650px;
+    margin-bottom: 2rem;
 }
 
 #list_files {
