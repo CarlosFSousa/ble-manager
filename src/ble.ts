@@ -85,11 +85,11 @@ class BleConnection {
       const split_string = byteString.split(";");
       const name = split_string[0];
       const length = split_string[1];
-      this.generateBoxes(name, length, message);
+      this.generateBoxes(name, length);
     }
   };
 
-  generateBoxes = (name: string, length: string, byteArray: any) => {
+  generateBoxes = (name: string, length: string) => {
     const list_files: HTMLElement = document.getElementById("list_files");
 
     const card: HTMLElement = document.createElement("div");
@@ -107,33 +107,30 @@ class BleConnection {
     p.className = "card-text";
 
     const text_box: HTMLElement = document.createElement("textarea");
-    text_box.id = byteArray;
+    // text_box.style.display = "none";
+    text_box.setAttribute("cols", "25");
 
+    const buttonRow: HTMLElement = document.createElement("div");
+    buttonRow.style.margin = "5px";
     const button: HTMLElement = document.createElement("button");
-    button.className = "btn btn-success";
+    button.className = "btn btn-success toggle";
     button.textContent = "Download";
     button.setAttribute("name", name);
     button.addEventListener("click", async (e: any) => {
       const id = e.srcElement.name;
-      // const blob = new Blob([byteArray]);
-      // const link = document.createElement('a');
-      // link.href = window.URL.createObjectURL(blob);
-      // link.download = id;
-      // link.click();
-
       const uf8Encode = new TextEncoder();
       const name_bytes = uf8Encode.encode(id);
       await this._get_list_content.writeValueWithoutResponse(name_bytes);
       const display_info = await this._get_list_content.readValue();
-      console.log(display_info);
-      // const message: Uint8Array = new Uint8Array(display_info.buffer)
-      const byteData = buf2hex(display_info.buffer);
-      console.log(byteData);
+      const byteData = this.buf2hex(display_info.buffer);
+      text_box.innerText = byteData;
     });
 
     card_body.appendChild(h6);
     card_body.appendChild(p);
-    card_body.appendChild(button);
+    card_body.appendChild(text_box);
+    buttonRow.appendChild(button);
+    card_body.appendChild(buttonRow);
     card.appendChild(card_body);
     list_files.appendChild(card);
   };
@@ -151,37 +148,37 @@ class BleConnection {
       myDiv.style.border = "1px solid black";
     }
   };
+
+  checkBluetoothAvailability = async () => {
+    const bluetoothIsAvailable: any = document.getElementById("bluetooth-is-available");
+    const bluetoothIsAvailableMessage: any = document.getElementById(
+      "bluetooth-is-available-message"
+    );
+    const connectBlock: any = document.getElementById("connect-block");
+    if (
+      navigator &&
+      //@ts-ignore
+      navigator.bluetooth &&
+      //@ts-ignore
+      (await navigator.bluetooth.getAvailability())
+    ) {
+      bluetoothIsAvailableMessage.innerText = "Bluetooth is available in your browser.";
+      bluetoothIsAvailable.className = "alert alert-success";
+      connectBlock.style.display = "block";
+    } else {
+      bluetoothIsAvailable.className = "alert alert-danger";
+      bluetoothIsAvailableMessage.innerText = "Bluetooth is not available in your browser.";
+    }
+  };
+
+  buf2hex(buffer: ArrayBuffer) {
+    return [...new Uint8Array(buffer)].map((x) => x.toString(16).padStart(2, "0")).join("");
+  }
 }
 // ******************************* End of class ********************************
 
-const bluetoothIsAvailable: any = document.getElementById("bluetooth-is-available");
-const bluetoothIsAvailableMessage: any = document.getElementById("bluetooth-is-available-message");
-const connectBlock: any = document.getElementById("connect-block");
-
-const checkBluetoothAvailability = async () => {
-  if (
-    navigator &&
-    //@ts-ignore
-    navigator.bluetooth &&
-    //@ts-ignore
-    (await navigator.bluetooth.getAvailability())
-  ) {
-    bluetoothIsAvailableMessage.innerText = "Bluetooth is available in your browser.";
-    bluetoothIsAvailable.className = "alert alert-success";
-    connectBlock.style.display = "block";
-  } else {
-    bluetoothIsAvailable.className = "alert alert-danger";
-    bluetoothIsAvailableMessage.innerText = "Bluetooth is not available in your browser.";
-  }
-};
-
-checkBluetoothAvailability();
 const connectButton: any = document.querySelector("#start_scan");
 const disconnectButton: any = document.querySelector("#disconnect");
 const connection = new BleConnection();
+connection.checkBluetoothAvailability();
 connectButton.addEventListener("click", connection.scanFilteredDevices);
-
-function buf2hex(buffer) {
-  // buffer is an ArrayBuffer
-  return [...new Uint8Array(buffer)].map((x) => x.toString(16).padStart(2, "0")).join("");
-}
