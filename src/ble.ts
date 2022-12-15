@@ -6,16 +6,24 @@ class BleConnection {
   _service: any = null;
   _get_list_characteristic: any = null;
   _get_list_content: any = null;
-  SERVICE_UUID: String = 'dbd00001-ff30-40a5-9ceb-a17358d31999';
-  GET_LIST_CHARACTERISTIC_UUID: String = 'dbd00010-ff30-40a5-9ceb-a17358d31999';
-  GET_CONTENT_CHARACTERISTIC_UUID: String = 'dbd00011-ff30-40a5-9ceb-a17358d31999';
+  _get_shortname: any = null;
+  _display_info: any = null;
+  _listing_files_busy: boolean = false;
+  _accum: number = 0;
+  SERVICE_UUID: string = 'dbd00001-ff30-40a5-9ceb-a17358d31999';
+  GET_LIST_CHARACTERISTIC_UUID: string = 'dbd00010-ff30-40a5-9ceb-a17358d31999';
+  GET_CONTENT_CHARACTERISTIC_UUID: string = 'dbd00011-ff30-40a5-9ceb-a17358d31999';
+  GET_SHORTNAME_CHARACTERISTIC_UUID: string = 'dbd00002-ff30-40a5-9ceb-a17358d31999';
 
   scanFilteredDevices = async () => {
     try {
       this.printLog('Requesting BLE connection');
       await this.connect();
       this.current_device = this._device;
+      this._listing_files_busy = true;
       await this.getListFiles();
+      this._listing_files_busy = false;
+      this.busy_info();
       disconnectButton.addEventListener('click', () => {
         this.current_device.gatt.disconnect();
         this.printLog('Device disconnected');
@@ -23,6 +31,8 @@ class BleConnection {
       this.connected();
     } catch (error) {
       this.printLog(`Error - ${error}`);
+      this._listing_files_busy = false;
+      this.busy_info();
     }
   };
 
@@ -38,12 +48,9 @@ class BleConnection {
       const connection: any = await this._device.gatt.connect();
       this._service = await connection.getPrimaryService(this.SERVICE_UUID);
       this.printLog('Service Connected');
-      this._get_list_characteristic = await this._service.getCharacteristic(
-        this.GET_LIST_CHARACTERISTIC_UUID
-      );
-      this._get_list_content = await this._service.getCharacteristic(
-        this.GET_CONTENT_CHARACTERISTIC_UUID
-      );
+      this._get_list_characteristic = await this._service.getCharacteristic(this.GET_LIST_CHARACTERISTIC_UUID);
+      this._get_list_content = await this._service.getCharacteristic(this.GET_CONTENT_CHARACTERISTIC_UUID);
+      this.displayShortName();
     } catch (error) {
       this.printLog(`Error: ${error}`);
       this.disconnect();
@@ -62,6 +69,9 @@ class BleConnection {
     this._service = null;
     this._get_list_characteristic = null;
     this._get_list_content = null;
+    this._get_shortname = null;
+    this.printLog('Device Disconnected');
+    shortname.style.display = 'none';
   };
 
   _requestDevice = (filters: any) => {
@@ -78,15 +88,16 @@ class BleConnection {
   };
 
   getListFiles = async () => {
+    busy_info.textContent = 'Fetching Files';
     while (true) {
+      this.busy_info();
       const value: any = await this._get_list_characteristic.readValue();
-      console.log(value);
       const message: Uint8Array = new Uint8Array(value.buffer);
-      if (message.byteLength === 0) return;
+      if (message.byteLength === 0) break;
       const byteString: string = String.fromCharCode(...message);
-      const split_string = byteString.split(';');
-      const name = split_string[0];
-      const length = split_string[1];
+      const split_string: string[] = byteString.split(';');
+      const name: string = split_string[0];
+      const length: string = split_string[1];
       this.generateBoxes(name, length);
     }
   };
@@ -109,13 +120,19 @@ class BleConnection {
     p.className = 'card-text';
 
     const text_box: HTMLElement = document.createElement('textarea');
-    // text_box.style.display = "none";
-    text_box.setAttribute('cols', '32');
+    text_box.style.width = '100%';
+    text_box.style.margin = '0';
+    text_box.style.padding = '0';
+    //    text_box.setAttribute('cols', '32');
 
     const button_row: HTMLElement = document.createElement('div');
     button_row.style.margin = '5px';
     button_row.style.display = 'flex';
     button_row.style.justifyContent = 'space-around';
+
+    const button_save: HTMLButtonElement = document.createElement('button');
+    button_save.className = 'btn btn-dark';
+    button_save.textContent = 'Save';
 
     const button_download: HTMLButtonElement = document.createElement('button');
     button_download.className = 'btn btn-dark';
@@ -123,19 +140,34 @@ class BleConnection {
     button_download.setAttribute('name', name);
 
     button_download.addEventListener('click', async (e: any) => {
-      const id = e.srcElement.name;
+      let hex_text = '';
+      let offset = 0;
+      const id = e.target.name;
       const uf8encode = new TextEncoder();
-      const name_bytes = uf8encode.encode(id);
+      const name_bytes = uf8encode.encode(`${id};${offset};`);
       await this._get_list_content.writeValueWithoutResponse(name_bytes);
-      const display_info = await this._get_list_content.readValue();
-      const byteData = this.buf2hex(display_info.buffer);
-      text_box.innerText = byteData;
+      while (true) {
+        this._display_info = await this._get_list_content.readValue();
+        console.log(this._display_info);
+        if (this._display_info.byteLength === 0) {
+          break;
+        } else {
+          offset += this._display_info.byteLength;
+          console.log(`Appending length to offset:  ${offset}`);
+          const uf8encode = new TextEncoder();
+          const name_bytes = uf8encode.encode(`${id};${offset};`);
+          await this._get_list_content.writeValueWithoutResponse(name_bytes);
+        }
+        hex_text += this.buf2hex(this._display_info.buffer);
+      }
+      console.log(`Text: ${hex_text}`);
+      text_box.innerText = hex_text;
 
-      // const blob = new Blob([byteArray]);
-      // const link = document.createElement('a');
-      // link.href = window.URL.createObjectURL(blob);
-      // link.download = id;
-      // link.click();
+      const blob = new Blob([this._display_info.buffer]);
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = id;
+      link.click();
     });
 
     const button_post: HTMLButtonElement = document.createElement('button');
@@ -157,12 +189,12 @@ class BleConnection {
   };
 
   printLog = (message: string) => {
-    const myDiv: any = document.getElementById('log');
-    const p: any = document.createElement('p');
+    const myDiv: HTMLElement = document.getElementById('log');
+    const p: HTMLElement = document.createElement('p');
     if (message.includes('Error')) p.className = 'red';
-    const now = new Date();
-    const date = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-    const time = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+    const now: Date = new Date();
+    const date: string = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+    const time: string = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
     p.textContent = `${date} ${time} - ${message}`;
     myDiv.append(p);
     if (myDiv.textContent.trim() !== '') {
@@ -170,13 +202,13 @@ class BleConnection {
     }
   };
 
-  checkBluetoothAvailability = async (connected: boolean) => {
+  checkBluetoothAvailability = (connected: boolean) => {
     if (
       navigator &&
       //@ts-ignore
       navigator.bluetooth &&
       //@ts-ignore
-      (await navigator.bluetooth.getAvailability()) &&
+      navigator.bluetooth.getAvailability() &&
       connected == false
     ) {
       bluetoothIsAvailableMessage.innerText = 'Bluetooth is available in your browser.';
@@ -189,11 +221,36 @@ class BleConnection {
   };
 
   buf2hex(buffer: ArrayBuffer) {
-    return [...new Uint8Array(buffer)].map((x) => x.toString(16).padStart(2, '0')).join('');
+    return [...new Uint8Array(buffer)].map((x) => x.toString().padStart(2, '0')).join('');
+  }
+
+  busy_info() {
+    if (this._listing_files_busy) {
+      if (this._accum === 4) {
+        busy_info.textContent = 'Fecthing Files';
+        this._accum = 0;
+      }
+      busy_info.textContent += '.';
+      this._accum++;
+    } else {
+      busy_info.textContent = '';
+    }
+  }
+
+  async displayShortName() {
+    shortname.style.display = 'block';
+    this._get_shortname = await this._service.getCharacteristic(this.GET_SHORTNAME_CHARACTERISTIC_UUID);
+    const value = await this._get_shortname.readValue();
+    const message: Uint8Array = new Uint8Array(value.buffer);
+    const byteString: string = String.fromCharCode(...message);
+    console.log(byteString);
+    shortname.textContent = byteString;
   }
 }
 // ******************************* End of class ********************************
 
+const shortname = document.getElementById('shortname');
+const busy_info: HTMLElement = document.getElementById('busy-info');
 const bluetoothIsAvailable: any = document.getElementById('bluetooth-is-available');
 const bluetoothIsAvailableMessage: any = document.getElementById('bluetooth-is-available-message');
 const connectBlock: any = document.getElementById('connect-block');
