@@ -6,13 +6,15 @@ class BleConnection {
   _service: any = null;
   _get_list_characteristic: any = null;
   _get_list_content: any = null;
+  _write_content: any = null;
   _get_shortname: any = null;
   _display_info: any = null;
   _listing_files_busy: boolean = false;
   _accum: number = 0;
   SERVICE_UUID: string = 'dbd00001-ff30-40a5-9ceb-a17358d31999';
   GET_LIST_CHARACTERISTIC_UUID: string = 'dbd00010-ff30-40a5-9ceb-a17358d31999';
-  GET_CONTENT_CHARACTERISTIC_UUID: string = 'dbd00011-ff30-40a5-9ceb-a17358d31999';
+  READ_CONTENT_CHARACTERISTIC_UUID: string = 'dbd00012-ff30-40a5-9ceb-a17358d31999';
+  WRITE_CONTENT_CHARACTERISTIC_UUID: string = 'dbd00011-ff30-40a5-9ceb-a17358d31999';
   GET_SHORTNAME_CHARACTERISTIC_UUID: string = 'dbd00002-ff30-40a5-9ceb-a17358d31999';
 
   scanFilteredDevices = async () => {
@@ -49,7 +51,8 @@ class BleConnection {
       this._service = await connection.getPrimaryService(this.SERVICE_UUID);
       this.printLog('Service Connected');
       this._get_list_characteristic = await this._service.getCharacteristic(this.GET_LIST_CHARACTERISTIC_UUID);
-      this._get_list_content = await this._service.getCharacteristic(this.GET_CONTENT_CHARACTERISTIC_UUID);
+      this._write_content = await this._service.getCharacteristic(this.WRITE_CONTENT_CHARACTERISTIC_UUID);
+      this._get_list_content = await this._service.getCharacteristic(this.READ_CONTENT_CHARACTERISTIC_UUID);
       this.displayShortName();
     } catch (error) {
       this.printLog(`Error: ${error}`);
@@ -145,7 +148,8 @@ class BleConnection {
       const id = e.target.name;
       const uf8encode = new TextEncoder();
       const name_bytes = uf8encode.encode(`${id};${offset};`);
-      await this._get_list_content.writeValueWithoutResponse(name_bytes);
+
+      await this._write_content.writeValueWithoutResponse(name_bytes);
       while (true) {
         this._display_info = await this._get_list_content.readValue();
         console.log(this._display_info);
@@ -156,14 +160,14 @@ class BleConnection {
           console.log(`Appending length to offset:  ${offset}`);
           const uf8encode = new TextEncoder();
           const name_bytes = uf8encode.encode(`${id};${offset};`);
-          await this._get_list_content.writeValueWithoutResponse(name_bytes);
+          await this._write_content.writeValueWithoutResponse(name_bytes);
         }
         hex_text += this.buf2hex(this._display_info.buffer);
       }
       console.log(`Text: ${hex_text}`);
       text_box.innerText = hex_text;
 
-      const blob = new Blob([this._display_info.buffer]);
+      const blob = new Blob(this._display_info.buffer);
       const link = document.createElement('a');
       link.href = window.URL.createObjectURL(blob);
       link.download = id;
@@ -247,16 +251,3 @@ class BleConnection {
     shortname.textContent = byteString;
   }
 }
-// ******************************* End of class ********************************
-
-const shortname = document.getElementById('shortname');
-const busy_info: HTMLElement = document.getElementById('busy-info');
-const bluetoothIsAvailable: any = document.getElementById('bluetooth-is-available');
-const bluetoothIsAvailableMessage: any = document.getElementById('bluetooth-is-available-message');
-const connectBlock: any = document.getElementById('connect-block');
-const connectButton: any = document.querySelector('#start_scan');
-const disconnectButton: any = document.querySelector('#disconnect');
-
-const connection = new BleConnection();
-connection.checkBluetoothAvailability(false);
-connectButton.addEventListener('click', connection.scanFilteredDevices);
