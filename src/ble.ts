@@ -10,10 +10,17 @@ class Ble {
   }
 
   private async connect() {
-    const params: RequestDeviceOptions = {
-      optionalServices: [this.SERVICE_UUID],
-      filters: [{ name: 'DVBdiver' }],
-    };
-    await navigator.bluetooth.requestDevice(params);
+    try {
+      const params: RequestDeviceOptions = {
+        optionalServices: [this.SERVICE_UUID],
+        filters: [{ name: 'DVBdiver' }],
+      };
+      this.device = await navigator.bluetooth.requestDevice(params);
+
+      this.device.addEventListener('gattserverdisconnected', async (event: BluetoothRemoteGATTServer) => {
+        console.log(event);
+      });
+      const connection = await this.device.gatt.connect();
+    } catch (error) {}
   }
 }
