@@ -3,7 +3,7 @@
     "module": "commonjs",
     "moduleResolution": "classic",
     "target": "ESNext",
-    "sourceMap": true,
+    "sourceMap": false,
     "watch": true,
     "outDir": "dist"
   },

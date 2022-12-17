@@ -5,3 +5,7 @@ const bluetoothIsAvailableMessage: any = document.getElementById('bluetooth-is-a
 const connectBlock: any = document.getElementById('connect-block');
 const connectButton: any = document.querySelector('#start_scan');
 const disconnectButton: any = document.querySelector('#disconnect');
+
+const printLog = (message: string) => {
+  console.log(message);
+};
