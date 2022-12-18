@@ -1,17 +1,16 @@
 // Carlos Fontes e Sousa 22
 
 class Ble {
+  public listOfFiles: any[] = null;
+
   private device: BluetoothDevice = null;
   private service: BluetoothRemoteGATTService = null;
-  private listOfFiles: any[] = null;
   private SERVICE_UUID: BluetoothServiceUUID = 'dbd00001-ff30-40a5-9ceb-a17358d31999';
   private LIST_FILES_UUID: BluetoothCharacteristicUUID = 'dbd00010-ff30-40a5-9ceb-a17358d31999';
   private GET_SHORTNAME_UUID: BluetoothCharacteristicUUID = 'dbd00002-ff30-40a5-9ceb-a17358d31999';
 
   // start connection after clicking the connect button
-  public scan() {
-    this.connect();
-  }
+  public scan() {}
 
   private async connect() {
     try {
@@ -66,5 +65,10 @@ class Ble {
     }
   }
 
-  private getFileContent() {}
+  private getFileContent(e: any) {
+    console.log(e);
+    if (this.listOfFiles.length > 0) {
+      this.listOfFiles.map((file) => {});
+    }
+  }
 }
