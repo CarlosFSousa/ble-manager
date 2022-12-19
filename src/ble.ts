@@ -9,6 +9,7 @@ class Ble {
   private LIST_FILES_UUID: BluetoothCharacteristicUUID = 'dbd00010-ff30-40a5-9ceb-a17358d31999';
   private GET_SHORTNAME_UUID: BluetoothCharacteristicUUID = 'dbd00002-ff30-40a5-9ceb-a17358d31999';
   private WRITE_TO_DEVICE_UUID: BluetoothCharacteristicUUID = 'dbd00011-ff30-40a5-9ceb-a17358d31999';
+  private READ_FROM_DEVICE_UUID: BluetoothCharacteristicUUID = 'dbd00012-ff30-40a5-9ceb-a17358d31999';
 
   // start connection after clicking the connect button
   public scan() {}
@@ -73,10 +74,17 @@ class Ble {
     const uf8encode = new TextEncoder();
 
     const name_bytes = uf8encode.encode(`${name};${offset};`);
-    const characteristic: BluetoothRemoteGATTCharacteristic = await this.service.getCharacteristic(
+    const write_characteristic: BluetoothRemoteGATTCharacteristic = await this.service.getCharacteristic(
       this.WRITE_TO_DEVICE_UUID
     );
-    await characteristic.writeValue(name_bytes);
+    const read_characteristic: BluetoothRemoteGATTCharacteristic = await this.service.getCharacteristic(
+      this.READ_FROM_DEVICE_UUID
+    );
+    await write_characteristic.writeValue(name_bytes);
+
+    while (true) {
+      const display_info = await read_characteristic.readValue();
+    }
 
     // files.map((file) => {
     //   if (file.name === e.target.name) {
