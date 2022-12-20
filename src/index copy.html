@@ -7,26 +7,18 @@
 </head>
 
 <body>
-    <!-- As a link -->
-    <nav class="navbar bg-light">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Navbar</a>
-        </div>
-    </nav>
-
     <!-- As a heading -->
-    <nav class="navbar bg-light">
+    <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">Navbar</span>
+            <span class="navbar-brand mb-0 h1">Ble Scanner v0.1</span>
         </div>
     </nav>
-    <main role="main" class="container">
-        <div class="title">
-            <h1>BLE Scanner</h1>
-            <p>V0.1</p>
+    <main role="main" class="container-fluid">
+        <div class="row">
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse"></nav>
         </div>
-
-        <div class="content" id="initial-screen">
+        <div id="list_files"></div>
+        <!-- <div class="content" id="initial-screen">
             <div class="alert alert-primary" role="alert" id="bluetooth-is-available">
                 <b><span id="bluetooth-is-available-message"></span></b>
                 This tool is compatible with desktops (or laptops) with the <b>latest Chrome, Opera and Edge</b>
@@ -35,27 +27,25 @@
             </div>
             <div id="connect-block" style="display: none;">
                 <div class="form-group form-inline">
-                    <!-- <div class="col-auto">
-                        <input id="device-name-input" type="text" class="form-control" id="device-name-input"
-                            placeholder="Device name (optional)">
-                    </div> -->
                     <div class="col-auto d-flex">
                         <button id="start_scan" type="submit" class="btn btn-primary"><i class="bi-bluetooth"></i>
                             Connect</button>
-                        <button id="disconnect" class="btn btn-danger" style="display: none;">Disconnect</button>
+                        <button id9="disconnect" class="btn btn-danger" style="display: none;">Disconnect</button>
                         <p id="busy-info"></p>
                     </div>
                 </div>
                 <div>
-                    <h4 id="shortname"></h4>
+                    <h4 id="short name"></h4>
                 </div>
             </div>
-        </div>
+        </div> -->
 
-        <div id="list_files"></div>
+        <!-- 
+        
         <div class="footer">
             <div id="log"></div>
         </div>
+     -->
         <!-- <div class="input-group mb-3" id="scan">
         <input id="filters" type="text" class="form-control" placeholder="Filtered Services"
             aria-label="Filtered Services">
@@ -74,6 +64,5 @@
 
     </main>
 </body>
-<script src="initial.js"></script>
 <script src="ble.js"></script>
 <script src="index.js"></script>

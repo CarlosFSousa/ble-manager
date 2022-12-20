@@ -51,6 +51,10 @@ class Ble {
     return result;
   }
 
+  private async setShortname() {}
+
+  private async getSerialNumber() {}
+
   private async getFileList() {
     while (true) {
       const characteristic: BluetoothRemoteGATTCharacteristic = await this.service.getCharacteristic(
@@ -72,27 +76,33 @@ class Ble {
     let offset = 0;
     const name = e.target.name;
     const uf8encode = new TextEncoder();
-
     const name_bytes = uf8encode.encode(`${name};${offset};`);
+
     const write_characteristic: BluetoothRemoteGATTCharacteristic = await this.service.getCharacteristic(
       this.WRITE_TO_DEVICE_UUID
     );
+
     const read_characteristic: BluetoothRemoteGATTCharacteristic = await this.service.getCharacteristic(
       this.READ_FROM_DEVICE_UUID
     );
+
     await write_characteristic.writeValue(name_bytes);
 
     while (true) {
       const display_info = await read_characteristic.readValue();
+      if (display_info.byteLength !== 0) {
+        offset += display_info.byteLength;
+        printLog(`Appending length to offset: ${offset}`);
+        const uf8encode = new TextEncoder();
+        const name_bytes = uf8encode.encode(`${name};${offset};`);
+        await write_characteristic.writeValue(name_bytes);
+        const byteArray = [...new Uint8Array(display_info.buffer)].map((x) => x.toString().padStart(2, '0')).join('');
+        hex_text += byteArray;
+      } else {
+        break;
+      }
     }
-
-    // files.map((file) => {
-    //   if (file.name === e.target.name) {
-    //     console.log('yes');
-    //   }
-    // });
-    // if (this.listOfFiles.length > 0) {
-    //   this.listOfFiles.map((file) => {});
-    // }
   }
+
+  private formatStorage() {}
 }
