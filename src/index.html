@@ -3,6 +3,7 @@
     <!-- CSS only -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -13,60 +14,44 @@
             <span class="navbar-brand mb-0 h1">Ble Scanner v0.1</span>
         </div>
     </nav>
-    <main role="main" class="container-fluid">
-        <div class="row d-flex">
+    <main role="main">
+        <div class="row main-section">
             <div class="sidebar">
-
-            </div>
-            <div class="main-content">
-
-            </div>
-        </div>
-        <div id="list_files"></div>
-        <!-- <div class="content" id="initial-screen">
-            <div class="alert alert-primary" role="alert" id="bluetooth-is-available">
-                <b><span id="bluetooth-is-available-message"></span></b>
-                This tool is compatible with desktops (or laptops) with the <b>latest Chrome, Opera and Edge</b>
-                browsers and working
-                Bluetooth connection.
-            </div>
-            <div id="connect-block" style="display: none;">
-                <div class="form-group form-inline">
-                    <div class="col-auto d-flex">
-                        <button id="start_scan" type="submit" class="btn btn-primary"><i class="bi-bluetooth"></i>
-                            Connect</button>
-                        <button id9="disconnect" class="btn btn-danger" style="display: none;">Disconnect</button>
-                        <p id="busy-info"></p>
-                    </div>
+                <div>
+                    <button id="connect" type="submit" class="btn btn-dark p-2 m-2 ">Connect</button>
+                    <button id="disconnect" type="submit" class="btn btn-danger p-2 m-2"
+                        style="display:none">Disconnect</button>
                 </div>
                 <div>
-                    <h4 id="short name"></h4>
+                    <button class="btn btn-dark=">Show Log</button>
                 </div>
             </div>
-        </div> -->
-
-        <!-- 
-        
-        <div class="footer">
-            <div id="log"></div>
+            <div class="main-content">
+                <div class="alert alert-danger" role="alert" id="bluetooth-is-available" style="display:none">
+                    <b><span>This browser does not support bluetooth connection. Try Chrome, Opera or Edge</span></b>
+                </div>
+                <table class="table table-striped" id="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col">Length</th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <!-- <th scope="row">1</th>
+                            <td>101203-123.dvb</td>
+                            <td>012030</td>
+                            <td>
+                                <button class="btn btn-sm btn-dark"><i class="fas fa-edit"></i>Download</button>
+                                <button class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i>Delete</button>
+                            </td> -->
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-     -->
-        <!-- <div class="input-group mb-3" id="scan">
-        <input id="filters" type="text" class="form-control" placeholder="Filtered Services"
-            aria-label="Filtered Services">
-        <div class="input-group-append">
-            <button id="start_scan" class="btn btn-outline-secondary" type="button">Scan</button>
-        </div>
-    </div> -->
-        <!-- <div class="image">
-        <div class="form-group">
-            <div id="file-status">Select image file (.img)</div>
-            <div id="file-info"></div>
-        </div>
-        <button class="btn btn-primary" id="file-upload" disabled><i class="bi-upload"></i> Upload</button>
-    </div> -->
-
-
     </main>
 </body>
 <script src="ble.js"></script>
