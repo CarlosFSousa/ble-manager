@@ -1,9 +1,9 @@
 // Carlos Fontes e Sousa 22
 
 class Ble {
-  public listOfFiles: any[] = null;
-
-  private device: BluetoothDevice = null;
+  private listOfFiles: any = [];
+  private shortname: any = null;
+  private device: any = null;
   private service: BluetoothRemoteGATTService = null;
   private SERVICE_UUID: BluetoothServiceUUID = 'dbd00001-ff30-40a5-9ceb-a17358d31999';
   private LIST_FILES_UUID: BluetoothCharacteristicUUID = 'dbd00010-ff30-40a5-9ceb-a17358d31999';
@@ -11,51 +11,59 @@ class Ble {
   private WRITE_TO_DEVICE_UUID: BluetoothCharacteristicUUID = 'dbd00011-ff30-40a5-9ceb-a17358d31999';
   private READ_FROM_DEVICE_UUID: BluetoothCharacteristicUUID = 'dbd00012-ff30-40a5-9ceb-a17358d31999';
 
-  public scan() {
-    this.connect();
-    this.getFileList();
-  }
-
-  private async connect() {
+  public async connect() {
     try {
       const params: RequestDeviceOptions = {
         optionalServices: [this.SERVICE_UUID],
         filters: [{ name: 'DVBdiver' }],
       };
       this.device = await navigator.bluetooth.requestDevice(params);
-
-      this.device.addEventListener('gattserverdisconnected', async function (event: any) {
+      this.device.addEventListener('gattserverdisconnected', (event: any) => {
         console.log(event);
+        this.disconnect();
       });
 
       const connection: BluetoothRemoteGATTServer = await this.device.gatt.connect();
       this.service = await connection.getPrimaryService(this.SERVICE_UUID);
-      printLog('Connected');
+      printLog(`Connected to service ${this.SERVICE_UUID}`);
+      await this.setShortName();
+      // await this.getSerialNumber();
+      await this.getFileList();
     } catch (error) {
-      console.log(error);
+      printLog(`Error: ${error}`);
+      this.disconnect();
     }
   }
 
   public disconnect() {
     printLog('Disconnected');
+    this.device.gatt.disconnect();
     this.device = null;
     this.service = null;
-    this.listOfFiles = null;
+    this.formatStorage();
   }
 
   public async getShortName() {
+    return this.shortname;
+  }
+
+  private async setShortName() {
     const characteristic: BluetoothRemoteGATTCharacteristic = await this.service.getCharacteristic(
       this.GET_SHORTNAME_UUID
     );
     const value: DataView = await characteristic.readValue();
     const message: Uint8Array = new Uint8Array(value.buffer);
-    const result: String = String.fromCharCode(...message);
-    return result;
+    this.shortname = String.fromCharCode(...message);
+  }
+  public getFiles() {
+    return this.listOfFiles;
   }
 
-  private async setShortname() {}
-
-  private async getSerialNumber() {}
+  private async getSerialNumber() {
+    const characteristic = await this.service.getCharacteristic('2a25');
+    const value = await characteristic.readValue();
+    console.log(value);
+  }
 
   private async getFileList() {
     while (true) {
@@ -73,13 +81,7 @@ class Ble {
     }
   }
 
-  public async getFileContent(e: any) {
-    let hex_text = '';
-    let offset = 0;
-    const name = e.target.name;
-    const uf8encode = new TextEncoder();
-    const name_bytes = uf8encode.encode(`${name};${offset};`);
-
+  public async getFileContent(name: string) {
     const write_characteristic: BluetoothRemoteGATTCharacteristic = await this.service.getCharacteristic(
       this.WRITE_TO_DEVICE_UUID
     );
@@ -87,6 +89,11 @@ class Ble {
     const read_characteristic: BluetoothRemoteGATTCharacteristic = await this.service.getCharacteristic(
       this.READ_FROM_DEVICE_UUID
     );
+
+    let hex_text = '';
+    let offset = 0;
+    const uf8encode = new TextEncoder();
+    const name_bytes = uf8encode.encode(`${name};${offset};`);
 
     await write_characteristic.writeValue(name_bytes);
 
@@ -107,5 +114,8 @@ class Ble {
     return hex_text;
   }
 
-  private formatStorage() {}
+  private formatStorage() {
+    this.listOfFiles = [];
+    printLog('Files erased');
+  }
 }
