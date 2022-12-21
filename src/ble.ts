@@ -11,8 +11,10 @@ class Ble {
   private WRITE_TO_DEVICE_UUID: BluetoothCharacteristicUUID = 'dbd00011-ff30-40a5-9ceb-a17358d31999';
   private READ_FROM_DEVICE_UUID: BluetoothCharacteristicUUID = 'dbd00012-ff30-40a5-9ceb-a17358d31999';
 
-  // start connection after clicking the connect button
-  public scan() {}
+  public scan() {
+    this.connect();
+    this.getFileList();
+  }
 
   private async connect() {
     try {
@@ -34,14 +36,14 @@ class Ble {
     }
   }
 
-  private disconnect() {
+  public disconnect() {
     printLog('Disconnected');
     this.device = null;
     this.service = null;
     this.listOfFiles = null;
   }
 
-  private async getShortName() {
+  public async getShortName() {
     const characteristic: BluetoothRemoteGATTCharacteristic = await this.service.getCharacteristic(
       this.GET_SHORTNAME_UUID
     );
@@ -102,6 +104,7 @@ class Ble {
         break;
       }
     }
+    return hex_text;
   }
 
   private formatStorage() {}

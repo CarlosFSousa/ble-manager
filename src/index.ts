@@ -1,91 +1,98 @@
-const connection = new Ble();
-// connection.checkBluetoothAvailability(false);
-// connectButton.addEventListener('click', connection.scanFilteredDevices);
-// console.log('initiated');
-
 const list_files: HTMLElement = document.getElementById('list_files');
-const shortname: HTMLElement = document.getElementById('shortname');
-const busy_info: HTMLElement = document.getElementById('busy-info');
 const bluetoothIsAvailable: HTMLElement = document.getElementById('bluetooth-is-available');
-const bluetoothIsAvailableMessage: HTMLElement = document.getElementById('bluetooth-is-available-message');
-const connectBlock: HTMLElement = document.getElementById('connect-block');
-const connectButton: HTMLElement = document.querySelector('#start_scan');
+const connectButton: HTMLElement = document.querySelector('#connect');
 const disconnectButton: HTMLElement = document.querySelector('#disconnect');
+const table: HTMLTableElement = <HTMLTableElement>document.getElementById('table');
+const logInfo: HTMLElement = document.getElementById('log-info');
+const table_rows = document.getElementById('table-rows');
+
+const checkAvailability = (() => {
+  if (navigator && navigator.bluetooth && navigator.bluetooth.getAvailability()) {
+    table.style.display = 'table';
+    connectButton.style.display = 'block';
+  } else {
+    bluetoothIsAvailable.style.display = 'block';
+  }
+})();
+
+const connection = new Ble();
+const scanDevices = () => {};
+
+connectButton.addEventListener('click', scanDevices);
 
 const printLog = (message: string) => {
-  console.log(message);
+  const now: Date = new Date();
+  const date: string = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+  const time: string = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+  if (message.includes('Error')) {
+    logInfo.innerHTML += `<p class="red">${date} ${time} - ${message}</p>`;
+  } else {
+    logInfo.innerHTML += `<p>${date} ${time} - ${message}</p>`;
+  }
 };
 
-const files = [
-  {
-    name: '1',
-    length: '1000',
-  },
-  {
-    name: '2',
-    length: '1000',
-  },
-  {
-    name: '3',
-    length: '1000',
-  },
-  {
-    name: '4',
-    length: '1000',
-  },
-];
+// printLog('testing');
+// printLog('Error: this is an error');
+// printLog('Seems to work');
+
+// connection.listOfFiles = [
+//   {
+//     name: '1000-0001.dvb',
+//     length: '1000',
+//   },
+//   {
+//     name: '1000-0002.dvb',
+//     length: '1000',
+//   },
+//   {
+//     name: '1000-0003.dvb',
+//     length: '1000',
+//   },
+//   {
+//     name: '1000-0004.dvb',
+//     length: '1000',
+//   },
+// ];
+
+function downloadFile(e) {
+  var i = e;
+  console.log(i);
+  console.log(e.target.name);
+}
+function deleteFile(e) {
+  const name = e.target.name;
+  console.log(connection.listOfFiles);
+  connection.listOfFiles = connection.listOfFiles.filter((file) => {
+    if (file.name === name) return false;
+    return true;
+  });
+  console.log(connection.listOfFiles);
+}
 
 const generateBoxes = (name: string, length: string) => {
-  const card: HTMLElement = document.createElement('div');
-  card.className = 'card';
-  card.style.width = '18rem';
+  const row = table.insertRow(-1);
+  const cellName = row.insertCell(0);
+  const cellLength = row.insertCell(1);
+  const cellButtons = row.insertCell(2);
+  cellName.textContent = name;
+  cellLength.textContent = length;
 
-  const card_body: HTMLElement = document.createElement('div');
-  card_body.className = 'card-body';
+  const buttonDownload = document.createElement('button');
+  buttonDownload.className = 'btn btn-sm btn-dark table-button';
+  buttonDownload.name = name;
+  buttonDownload.innerHTML = '<i class="fa fa-download"></i><span style="font-size:smaller">Download</span>';
+  buttonDownload.addEventListener('click', downloadFile);
+  cellButtons.appendChild(buttonDownload);
 
-  const displayName: HTMLElement = document.createElement('div');
-  displayName.textContent = name;
-  displayName.className = 'card-title';
+  const buttonDelete = document.createElement('button');
+  buttonDelete.className = 'btn btn-sm btn-danger table-button';
+  buttonDelete.name = name;
+  buttonDelete.innerHTML = '<i class="fa fa-trash"></i><span style="font-size:smaller">Delete</span>';
+  buttonDelete.addEventListener('click', deleteFile);
 
-  const displayLength: HTMLElement = document.createElement('p');
-  displayLength.textContent = `${length} bytes`;
-  displayLength.className = 'card-text';
-
-  const displayContent: HTMLElement = document.createElement('textarea');
-  displayContent.style.width = '100%';
-  displayContent.style.margin = '0';
-  displayContent.style.padding = '0';
-
-  const button_row: HTMLElement = document.createElement('div');
-  button_row.style.margin = '5px';
-  button_row.style.display = 'flex';
-  button_row.style.justifyContent = 'space-around';
-
-  const button_save: HTMLButtonElement = document.createElement('button');
-  button_save.className = 'btn btn-dark';
-  button_save.textContent = 'Save';
-
-  const button_download: HTMLButtonElement = document.createElement('button');
-  button_download.className = 'btn btn-dark';
-  button_download.textContent = 'Download';
-  button_download.setAttribute('name', name);
-
-  const button_post: HTMLButtonElement = document.createElement('button');
-  button_post.className = 'btn btn-dark';
-  button_post.textContent = 'Post';
-
-  button_download.addEventListener('click', connection.getFileContent);
-
-  card_body.appendChild(displayName);
-  card_body.appendChild(displayLength);
-  card_body.appendChild(displayContent);
-  button_row.appendChild(button_download);
-  button_row.appendChild(button_post);
-  card_body.appendChild(button_row);
-  card.appendChild(card_body);
-  list_files.appendChild(card);
+  cellButtons.appendChild(buttonDelete);
 };
 
-files.map((file) => {
+connection.listOfFiles.map((file) => {
   generateBoxes(file.name, file.length);
 });
