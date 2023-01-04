@@ -1,107 +1,85 @@
-// Carlos Fontes e Sousa 22
+class DVBDeviceBLE {
+  listOfFiles: any = [];
+  shortname: any = null;
+  device: any = null;
+  service: any = null;
+  serialNumber: any = null;
+  SERVICE_UUID: BluetoothCharacteristicUUID = 'dbd00001-ff30-40a5-9ceb-a17358d31999';
+  LIST_FILES_UUID: BluetoothCharacteristicUUID = 'dbd00010-ff30-40a5-9ceb-a17358d31999';
+  GET_SHORTNAME_UUID: BluetoothCharacteristicUUID = 'dbd00002-ff30-40a5-9ceb-a17358d31999';
+  WRITE_TO_DEVICE_UUID: BluetoothCharacteristicUUID = 'dbd00011-ff30-40a5-9ceb-a17358d31999';
+  READ_FROM_DEVICE_UUID: BluetoothCharacteristicUUID = 'dbd00012-ff30-40a5-9ceb-a17358d31999';
+  FORMAT_STORAGE_UUID: BluetoothCharacteristicUUID = 'dbd00013-ff30-40a5-9ceb-a17358d31999';
 
-class Ble {
-  private listOfFiles: any = [];
-  private shortname: any = null;
-  private device: any = null;
-  private service: BluetoothRemoteGATTService = null;
-  private SERVICE_UUID: BluetoothServiceUUID = 'dbd00001-ff30-40a5-9ceb-a17358d31999';
-  private LIST_FILES_UUID: BluetoothCharacteristicUUID = 'dbd00010-ff30-40a5-9ceb-a17358d31999';
-  private GET_SHORTNAME_UUID: BluetoothCharacteristicUUID = 'dbd00002-ff30-40a5-9ceb-a17358d31999';
-  private WRITE_TO_DEVICE_UUID: BluetoothCharacteristicUUID = 'dbd00011-ff30-40a5-9ceb-a17358d31999';
-  private READ_FROM_DEVICE_UUID: BluetoothCharacteristicUUID = 'dbd00012-ff30-40a5-9ceb-a17358d31999';
-
-  public async connect() {
+  async connect() {
     try {
-      const params: RequestDeviceOptions = {
+      const params = {
         optionalServices: [this.SERVICE_UUID],
         filters: [{ name: 'DVBdiver' }],
       };
       this.device = await navigator.bluetooth.requestDevice(params);
-      this.device.addEventListener('gattserverdisconnected', (event: any) => {
+      this.device.addEventListener('gattserverdisconnected', (event) => {
         console.log(event);
         this.disconnect();
       });
-
-      const connection: BluetoothRemoteGATTServer = await this.device.gatt.connect();
+      const connection = await this.device.gatt.connect();
       this.service = await connection.getPrimaryService(this.SERVICE_UUID);
-      printLog(`Connected to service ${this.SERVICE_UUID}`);
+      console.log(`Connected to service ${this.SERVICE_UUID}`);
       await this.setShortName();
-      // await this.getSerialNumber();
-      await this.getFileList();
+      await this.setFileList();
+      // await this.setSerialNumber();
     } catch (error) {
-      printLog(`Error: ${error}`);
+      console.log(`Error: ${error}`);
       this.disconnect();
     }
   }
-
-  public disconnect() {
-    printLog('Disconnected');
+  disconnect() {
+    console.log('Disconnected');
     this.device.gatt.disconnect();
     this.device = null;
     this.service = null;
-    this.formatStorage();
+    this.serialNumber = null;
+    this.listOfFiles = [];
   }
-
-  public async getShortName() {
+  async getShortName() {
     return this.shortname;
   }
-
-  private async setShortName() {
-    const characteristic: BluetoothRemoteGATTCharacteristic = await this.service.getCharacteristic(
-      this.GET_SHORTNAME_UUID
-    );
-    const value: DataView = await characteristic.readValue();
-    const message: Uint8Array = new Uint8Array(value.buffer);
+  async setShortName() {
+    const characteristic = await this.service.getCharacteristic(this.GET_SHORTNAME_UUID);
+    const value = await characteristic.readValue();
+    const message = new Uint8Array(value.buffer);
     this.shortname = String.fromCharCode(...message);
   }
-  public getFiles() {
+  getFileList() {
     return this.listOfFiles;
   }
 
-  private async getSerialNumber() {
-    const characteristic = await this.service.getCharacteristic('2a25');
-    const value = await characteristic.readValue();
-    console.log(value);
-  }
-
-  private async getFileList() {
+  async setFileList() {
     while (true) {
-      const characteristic: BluetoothRemoteGATTCharacteristic = await this.service.getCharacteristic(
-        this.LIST_FILES_UUID
-      );
-      const value: DataView = await characteristic.readValue();
-      const message: Uint8Array = new Uint8Array(value.buffer);
+      const characteristic = await this.service.getCharacteristic(this.LIST_FILES_UUID);
+      const value = await characteristic.readValue();
+      const message = new Uint8Array(value.buffer);
       if (message.byteLength === 0) return;
-      const byteString: string = String.fromCharCode(...message);
-      const split_string: string[] = byteString.split(';');
-      const name: string = split_string[0];
-      const length: string = split_string[1];
+      const byteString = String.fromCharCode(...message);
+      const split_string = byteString.split(';');
+      const name = split_string[0];
+      const length = split_string[1];
       this.listOfFiles.push({ name, length });
     }
   }
-
-  public async getFileContent(name: string) {
-    const write_characteristic: BluetoothRemoteGATTCharacteristic = await this.service.getCharacteristic(
-      this.WRITE_TO_DEVICE_UUID
-    );
-
-    const read_characteristic: BluetoothRemoteGATTCharacteristic = await this.service.getCharacteristic(
-      this.READ_FROM_DEVICE_UUID
-    );
-
+  async getFileContent(name: any) {
+    const write_characteristic = await this.service.getCharacteristic(this.WRITE_TO_DEVICE_UUID);
+    const read_characteristic = await this.service.getCharacteristic(this.READ_FROM_DEVICE_UUID);
     let hex_text = '';
     let offset = 0;
     const uf8encode = new TextEncoder();
     const name_bytes = uf8encode.encode(`${name};${offset};`);
-
     await write_characteristic.writeValue(name_bytes);
-
     while (true) {
       const display_info = await read_characteristic.readValue();
       if (display_info.byteLength !== 0) {
         offset += display_info.byteLength;
-        printLog(`Appending length to offset: ${offset}`);
+        console.log(`Appending length to offset: ${offset}`);
         const uf8encode = new TextEncoder();
         const name_bytes = uf8encode.encode(`${name};${offset};`);
         await write_characteristic.writeValue(name_bytes);
@@ -113,9 +91,21 @@ class Ble {
     }
     return hex_text;
   }
+  async formatStorage() {
+    const characteristic = await this.service.getCharacteristic(this.FORMAT_STORAGE_UUID);
+    const uf8encode = new TextEncoder();
+    const char = uf8encode.encode(`1`);
+    await characteristic.writeValue(char);
+    console.log('Files erased');
+  }
 
-  private formatStorage() {
-    this.listOfFiles = [];
-    printLog('Files erased');
+  getSerialNumber() {
+    console.log(`Serial Number: ${this.serialNumber}`);
+    return this.serialNumber;
+  }
+  async setSerialNumber() {
+    const characteristic = await this.service.getCharacteristic('2a25');
+    const value = await characteristic.readValue();
+    this.serialNumber = value;
   }
 }

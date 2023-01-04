@@ -15,13 +15,13 @@ if (navigator && navigator.bluetooth && navigator.bluetooth.getAvailability()) {
   bluetoothIsAvailable.style.display = 'block';
 }
 
-const connection = new Ble();
+const connection = new DVBDeviceBLE();
 const scanDevices = async () => {
   try {
     spinner.style.display = 'block';
     await connection.connect();
     toggleButtons(true);
-    const files = connection.getFiles();
+    const files = connection.getFileList();
     if (files.length > 0) {
       files.map((file) => {
         generateTableRows(file.name, file.length);
