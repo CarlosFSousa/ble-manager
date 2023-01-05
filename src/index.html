@@ -1,58 +1,96 @@
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>BLE</title>
     <!-- CSS only -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-    <!-- As a heading -->
     <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">Ble Scanner v0.1</span>
+            <span class="navbar-brand mb-0 h1">Ble Scanner v1.0.3</span>
         </div>
     </nav>
-    <main role="main">
-        <div class="row main-section">
-            <div class="sidebar">
-                <div>
-                    <button id="connect" type="submit" class="btn btn-dark p-2 m-2 ">Connect</button>
-                    <button id="disconnect" type="submit" class="btn btn-danger p-2 m-2"
-                        style="display:none">Disconnect</button>
+    <div role="main" class="container-fluid">
+        <div class="row">
+            <div class="sidebar col-4 col-md-2 col-xl-1">
+                <div class="d-flex align-items-center justify-content-center">
+                    <button id="connect" type="submit" class="btn btn-dark my-2" style="display: none;"><i
+                            class="fab fa-bluetooth"></i>Connect</button>
+                    <button id="disconnect" type="submit" class="btn btn-danger mb-2" style="display:none"><i
+                            class="fab fa-bluetooth"></i>Disconnect</button>
+                    <div id="spinner" class="loader" style="display: none;"></div>
                 </div>
-                <div>
-                    <button class="btn btn-dark=">Show Log</button>
+                <div class="d-flex justify-content-center">
+                    <button id="log" class="btn btn-dark mb-2" data-bs-toggle="modal" data-bs-target="#log-content">Show
+                        Logs</button>
                 </div>
+                <select class="form-select" id="selectShortName" style="display: none;">
+                </select>
             </div>
-            <div class="main-content">
-                <div class="alert alert-danger" role="alert" id="bluetooth-is-available" style="display:none">
+            <div class="main col-8 col-md-10 col-xl-11">
+                <div class="alert alert-danger m-2 text-center" role="alert" id="bluetooth-is-available"
+                    style="display:none">
                     <b><span>This browser does not support bluetooth connection. Try Chrome, Opera or Edge</span></b>
                 </div>
-                <table class="table table-striped" id="table">
-                    <thead>
-                        <tr>
-                            <th scope="col">Name</th>
-                            <th scope="col">Length</th>
-                            <th scope="col"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <!-- <th scope="row">1</th>
-                            <td>101203-123.dvb</td>
-                            <td>012030</td>
-                            <td>
-                                <button class="btn btn-sm btn-dark"><i class="fas fa-edit"></i>Download</button>
-                                <button class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i>Delete</button>
-                            </td> -->
-                        </tr>
-                    </tbody>
-                </table>
+                <div id="table-container">
+                    <table class="table table-striped" id="table" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Length</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-rows">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </main>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="log-content" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Logs</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="log-info">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2 -->
+    <div class="modal fade" id="file-content" tabindex="-1" aria-labelledby="exampleModalLabel2" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="file-title modal-title" id="exampleModalLabel2"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea style="display: none;" id="file-info" cols="52" rows="10"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button id="save" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
 <script src="ble.js"></script>
 <script src="index.js"></script>
