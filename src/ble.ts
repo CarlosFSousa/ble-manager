@@ -11,7 +11,7 @@ class DVBDeviceBLE {
   READ_FROM_DEVICE_UUID: BluetoothCharacteristicUUID = 'dbd00012-ff30-40a5-9ceb-a17358d31999';
   FORMAT_STORAGE_UUID: BluetoothCharacteristicUUID = 'dbd00013-ff30-40a5-9ceb-a17358d31999';
 
-  async connect() {
+  public async connect() {
     try {
       const params = {
         optionalServices: [this.SERVICE_UUID],
@@ -33,7 +33,7 @@ class DVBDeviceBLE {
       this.disconnect();
     }
   }
-  disconnect() {
+  public disconnect() {
     console.log('Disconnected');
     this.device.gatt.disconnect();
     this.device = null;
@@ -41,20 +41,20 @@ class DVBDeviceBLE {
     this.serialNumber = null;
     this.listOfFiles = [];
   }
-  async getShortName() {
+  public async getShortName() {
     return this.shortname;
   }
-  async setShortName() {
+  private async setShortName() {
     const characteristic = await this.service.getCharacteristic(this.GET_SHORTNAME_UUID);
     const value = await characteristic.readValue();
     const message = new Uint8Array(value.buffer);
     this.shortname = String.fromCharCode(...message);
   }
-  getFileList() {
+  public getFileList() {
     return this.listOfFiles;
   }
 
-  async setFileList() {
+  private async setFileList() {
     while (true) {
       const characteristic = await this.service.getCharacteristic(this.LIST_FILES_UUID);
       const value = await characteristic.readValue();
@@ -67,7 +67,7 @@ class DVBDeviceBLE {
       this.listOfFiles.push({ name, length });
     }
   }
-  async getFileContent(name: any) {
+  public async getFileContent(name: any) {
     const write_characteristic = await this.service.getCharacteristic(this.WRITE_TO_DEVICE_UUID);
     const read_characteristic = await this.service.getCharacteristic(this.READ_FROM_DEVICE_UUID);
     let hex_text = '';
@@ -91,7 +91,8 @@ class DVBDeviceBLE {
     }
     return hex_text;
   }
-  async formatStorage() {
+
+    public async formatStorage() {
     const characteristic = await this.service.getCharacteristic(this.FORMAT_STORAGE_UUID);
     const uf8encode = new TextEncoder();
     const char = uf8encode.encode(`1`);
@@ -99,13 +100,12 @@ class DVBDeviceBLE {
     console.log('Files erased');
   }
 
-  getSerialNumber() {
+  public getSerialNumber() {
     console.log(`Serial Number: ${this.serialNumber}`);
     return this.serialNumber;
   }
-  async setSerialNumber() {
+  private async setSerialNumber() {
     const characteristic = await this.service.getCharacteristic('2a25');
-    const value = await characteristic.readValue();
-    this.serialNumber = value;
+    this.serialNumber = await characteristic.readValue();
   }
 }
