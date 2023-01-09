@@ -68,31 +68,37 @@ class DVBDeviceBLE {
     }
   }
   public async getFileContent(name: any) {
-    const write_characteristic = await this.service.getCharacteristic(this.WRITE_TO_DEVICE_UUID);
-    const read_characteristic = await this.service.getCharacteristic(this.READ_FROM_DEVICE_UUID);
-    let hex_text = '';
-    let offset = 0;
-    const uf8encode = new TextEncoder();
-    const name_bytes = uf8encode.encode(`${name};${offset};`);
-    await write_characteristic.writeValue(name_bytes);
-    while (true) {
-      const display_info = await read_characteristic.readValue();
-      if (display_info.byteLength !== 0) {
-        offset += display_info.byteLength;
-        console.log(`Appending length to offset: ${offset}`);
-        const uf8encode = new TextEncoder();
-        const name_bytes = uf8encode.encode(`${name};${offset};`);
-        await write_characteristic.writeValue(name_bytes);
-        const byteArray = [...new Uint8Array(display_info.buffer)].map((x) => x.toString().padStart(2, '0')).join('');
-        hex_text += byteArray;
-      } else {
-        break;
+    try {
+      const write_characteristic = await this.service.getCharacteristic(this.WRITE_TO_DEVICE_UUID);
+      const read_characteristic = await this.service.getCharacteristic(this.READ_FROM_DEVICE_UUID);
+      const arrayBuffers = [];
+      let offset = 0;
+      const uf8encode = new TextEncoder();
+      const name_bytes = uf8encode.encode(`${name};${offset};`);
+      await write_characteristic.writeValue(name_bytes);
+      while (true) {
+        const display_info = await read_characteristic.readValue();
+        if (display_info.byteLength !== 0) {
+          offset += display_info.byteLength;
+          console.log(`Appending length to offset: ${offset}`);
+          const uf8encode = new TextEncoder();
+          const name_bytes = uf8encode.encode(`${name};${offset};`);
+          await write_characteristic.writeValue(name_bytes);
+          const array: any = new Uint8Array(display_info.buffer);
+          array.map((x) => {
+            arrayBuffers.push(x);
+          });
+        } else {
+          break;
+        }
       }
+      return new Uint8Array(arrayBuffers);
+    } catch (error) {
+      console.log(error);
     }
-    return hex_text;
   }
 
-    public async formatStorage() {
+  public async formatStorage() {
     const characteristic = await this.service.getCharacteristic(this.FORMAT_STORAGE_UUID);
     const uf8encode = new TextEncoder();
     const char = uf8encode.encode(`1`);
