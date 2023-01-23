@@ -3,39 +3,42 @@ class DVBDeviceBLE {
   shortname: any = null;
   device: any = null;
   service: any = null;
+  deviceInformation: any = null;
   serialNumber: any = null;
-  SERVICE_UUID: BluetoothCharacteristicUUID = 'dbd00001-ff30-40a5-9ceb-a17358d31999';
+  DIS_SERVICE_ID: BluetoothCharacteristicUUID = 'device_information';
+  SERIAL_NUMBER_UUID: BluetoothCharacteristicUUID = 'dbd00003-ff30-40a5-9ceb-a17358d31999';
+  DVB_SERVICE_UUID: BluetoothCharacteristicUUID = 'dbd00001-ff30-40a5-9ceb-a17358d31999';
   LIST_FILES_UUID: BluetoothCharacteristicUUID = 'dbd00010-ff30-40a5-9ceb-a17358d31999';
   SHORTNAME_UUID: BluetoothCharacteristicUUID = 'dbd00002-ff30-40a5-9ceb-a17358d31999';
   WRITE_TO_DEVICE_UUID: BluetoothCharacteristicUUID = 'dbd00011-ff30-40a5-9ceb-a17358d31999';
   READ_FROM_DEVICE_UUID: BluetoothCharacteristicUUID = 'dbd00012-ff30-40a5-9ceb-a17358d31999';
   FORMAT_STORAGE_UUID: BluetoothCharacteristicUUID = 'dbd00013-ff30-40a5-9ceb-a17358d31999';
-  SERIAL_NUMBER_UUID = '00002a25-0000-1000-8000-00805f9b34fb';
 
+  // Starts searching for devices and connects to device information and dvb services
   public async connect() {
     try {
       const params = {
-        optionalServices: [this.SERVICE_UUID, this.SERIAL_NUMBER_UUID],
+        optionalServices: [this.DVB_SERVICE_UUID, this.DIS_SERVICE_ID],
         filters: [{ name: 'DVBdiver' }],
       };
       this.device = await navigator.bluetooth.requestDevice(params);
-      this.device.addEventListener('gattserverdisconnected', (event) => {
+      this.device.addEventListener('gattserverdisconnected', (event: any) => {
         console.log(event);
         this.disconnect();
       });
       const connection = await this.device.gatt.connect();
-      this.service = await connection.getPrimaryService(this.SERVICE_UUID);
-      console.log(`Connected to service ${this.SERVICE_UUID}`);
-      await this.initializeShortName();
-      await this.initializeSerialNumber();
-      console.log(this.serialNumber);
-      await this.initializeFileList();
+      this.service = await connection.getPrimaryService(this.DVB_SERVICE_UUID);
+      console.log(`Connected to service ${this.DVB_SERVICE_UUID}`);
+      await this.setShortName();
+      await this.setSerialNumber();
+      await this.setFileList();
     } catch (error) {
       console.log(error);
       this.disconnect();
     }
   }
 
+  // disconnectes device and sets everything to null or empty array
   public disconnect() {
     console.log('Disconnected');
     this.device.gatt.disconnect();
@@ -45,18 +48,36 @@ class DVBDeviceBLE {
     this.listOfFiles = [];
   }
 
-  private async initializeShortName() {
-    try {
-      const characteristic = await this.service.getCharacteristic(this.SHORTNAME_UUID);
-      const value = await characteristic.readValue();
-      const message = new Uint8Array(value.buffer);
-      this.shortname = String.fromCharCode(...message);
-    } catch (error) {
-      console.log(error);
-    }
+  // retrieves shortname from DVB unit
+  public async getShortName() {
+    return this.shortname;
   }
 
-  private async initializeFileList() {
+  // with parameter you set a new shortname. without parameter you retrieve the current shortname from device and set this.shortname
+  public async setShortName(shortname?) {
+    try {
+      if (!shortname) {
+        const characteristic = await this.service.getCharacteristic(this.SHORTNAME_UUID);
+        const value = await characteristic.readValue();
+        const shortName = new TextDecoder().decode(value);
+        this.shortname = shortName;
+      } else {
+        const characteristic = await this.service.getCharacteristic(this.SHORTNAME_UUID);
+        const uf8encode = new TextEncoder();
+        const newShortName = uf8encode.encode(shortname);
+        await characteristic.writeValue(newShortName);
+        this.shortname = newShortName;
+      }
+    } catch (error) {}
+  }
+
+  // retrieve array buffers
+  public getFileList() {
+    return this.listOfFiles;
+  }
+
+  // gets files from device and sets this.listOfFIles
+  private async setFileList() {
     try {
       while (true) {
         const characteristic = await this.service.getCharacteristic(this.LIST_FILES_UUID);
@@ -74,33 +95,7 @@ class DVBDeviceBLE {
     }
   }
 
-  private async initializeSerialNumber() {
-    try {
-      const characteristic = await this.service.getCharacteristic(this.SERIAL_NUMBER_UUID);
-      this.serialNumber = await characteristic.readValue();
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  public async getShortName() {
-    return this.shortname;
-  }
-
-  public async setShortName(shortname) {
-    try {
-      const characteristic = await this.service.getCharacteristic(this.SHORTNAME_UUID);
-      const uf8encode = new TextEncoder();
-      const newShortName = uf8encode.encode(shortname);
-      await characteristic.writeValue(newShortName);
-      this.shortname = newShortName;
-    } catch (error) {}
-  }
-
-  public getFileList() {
-    return this.listOfFiles;
-  }
-
+  // retrieves the data from file using parameter name
   public async getFileContent(name: any) {
     try {
       const write_characteristic = await this.service.getCharacteristic(this.WRITE_TO_DEVICE_UUID);
@@ -116,7 +111,6 @@ class DVBDeviceBLE {
           offset += display_info.byteLength;
           console.log(`Appending length to offset: ${offset}`);
           const uf8encode = new TextEncoder();
-          if (display_info.byteLength === offset) offset = 0;
           const name_bytes = uf8encode.encode(`${name};${offset};`);
           await write_characteristic.writeValue(name_bytes);
           const array: any = new Uint8Array(display_info.buffer);
@@ -133,29 +127,29 @@ class DVBDeviceBLE {
     }
   }
 
+  // retrieves serial number
   public getSerialNumber() {
     console.log(`Serial Number: ${this.serialNumber}`);
     return this.serialNumber;
   }
 
-  private async setSerialNumber(serial) {
+  // retrieves current serial number and sets this.serialNumber
+  private async setSerialNumber() {
     try {
       const characteristic = await this.service.getCharacteristic(this.SERIAL_NUMBER_UUID);
-      const uf8encode = new TextEncoder();
-      const newSerial = uf8encode.encode(serial);
-      await characteristic.writeValue(newSerial);
-      this.serialNumber = newSerial;
+      const serial = await characteristic.readValue();
+      const serialNumber = new TextDecoder().decode(serial);
+      this.serialNumber = serialNumber;
     } catch (error) {
       console.log(error);
     }
   }
 
+  // formats storage
   public async formatStorage() {
     try {
       const characteristic = await this.service.getCharacteristic(this.FORMAT_STORAGE_UUID);
-      const uf8encode = new TextEncoder();
-      const char = uf8encode.encode(`1`);
-      await characteristic.writeValue(char);
+      await characteristic.readValue();
       console.log('Files erased');
     } catch (error) {
       console.log(error);

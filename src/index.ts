@@ -26,6 +26,7 @@ const scanDevices = async () => {
     toggleButtons(true);
     const files = connection.getFileList();
     if (files.length > 0) {
+      console.log('files', files);
       files.map((file) => {
         generateTableRows(file.name, file.length);
       });
@@ -58,7 +59,7 @@ const printLog = (message) => {
   }
 };
 async function downloadFile(e) {
-  console.log(e.target);
+  // console.log(e.target);
   fileInfo.textContent = '';
   try {
     const name = e.target.name;
