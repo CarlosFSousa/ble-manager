@@ -8,6 +8,8 @@ const logInfo = document.getElementById('log-info');
 const fileInfo = document.getElementById('file-info');
 const fileTitle = document.querySelector('.file-title');
 const spinner = document.getElementById('spinner');
+const shortname: any = document.getElementById('set-shortname');
+const shortnameTitle = document.getElementById('title-shortname');
 
 if (navigator && navigator.bluetooth && navigator.bluetooth.getAvailability()) {
   table.style.display = 'table';
@@ -19,6 +21,18 @@ let hex_string = '';
 let content = null;
 
 const connection = new DVBDeviceBLE();
+
+connection.onDisconnect(function () {
+  table.innerHTML = '';
+  connectButton.style.display = 'block';
+  disconnectButton.style.display = 'none';
+});
+
+connection.onConnect(async function () {
+  const shortname = await connection.getShortName();
+  shortnameTitle.innerText = shortname;
+});
+
 const scanDevices = async () => {
   try {
     spinner.style.display = 'block';
@@ -135,3 +149,13 @@ logButton.addEventListener('click', () => {
   logButton.style.color = 'white';
 });
 saveButton.addEventListener('click', saveFile);
+
+shortname.addEventListener('keydown', async (e: any) => {
+  if (e.key === 'Enter') {
+    let value = e.target.value;
+    await connection.setShortName(value);
+    shortnameTitle.innerText = value;
+    shortname.value = '';
+    console.log(`New Shortname: ${value}`);
+  }
+});

@@ -5,6 +5,8 @@ class DVBDeviceBLE {
   service: any = null;
   deviceInformation: any = null;
   serialNumber: any = null;
+  _connectCallback = null;
+  _disconnectCallback = null;
   DIS_SERVICE_ID: BluetoothCharacteristicUUID = 'device_information';
   SERIAL_NUMBER_UUID: BluetoothCharacteristicUUID = 'dbd00003-ff30-40a5-9ceb-a17358d31999';
   DVB_SERVICE_UUID: BluetoothCharacteristicUUID = 'dbd00001-ff30-40a5-9ceb-a17358d31999';
@@ -22,9 +24,9 @@ class DVBDeviceBLE {
         filters: [{ name: 'DVBdiver' }],
       };
       this.device = await navigator.bluetooth.requestDevice(params);
-      this.device.addEventListener('gattserverdisconnected', (event: any) => {
+      this.device.addEventListener('gattserverdisconnected', async (event: any) => {
         console.log(event);
-        this.disconnect();
+        await this.disconnected();
       });
       const connection = await this.device.gatt.connect();
       this.service = await connection.getPrimaryService(this.DVB_SERVICE_UUID);
@@ -32,20 +34,37 @@ class DVBDeviceBLE {
       await this.setShortName();
       await this.setSerialNumber();
       await this.setFileList();
+      await this.connected();
     } catch (error) {
       console.log(error);
-      this.disconnect();
+      await this.disconnected();
     }
   }
+  private async connected() {
+    if (this._connectCallback) this._connectCallback();
+  }
 
+  public onConnect(callback) {
+    this._connectCallback = callback;
+    return this;
+  }
   // disconnectes device and sets everything to null or empty array
   public disconnect() {
+    return this.device.gatt.disconnect();
+  }
+
+  private async disconnected() {
     console.log('Disconnected');
-    this.device.gatt.disconnect();
+    if (this._disconnectCallback) this._disconnectCallback();
     this.device = null;
     this.service = null;
     this.serialNumber = null;
     this.listOfFiles = [];
+  }
+
+  public onDisconnect(callback) {
+    this._disconnectCallback = callback;
+    return this;
   }
 
   // retrieves shortname from DVB unit
