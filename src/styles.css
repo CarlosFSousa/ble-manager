@@ -1,31 +1,32 @@
-html,body{
-    margin:0;
-    overflow: hidden;
-}
+ html,body{
+  margin:0;
+  overflow: hidden;
+  }
 
 .sidebar {
-    background-color:rgb(43, 48, 53);
-    height: 100vh;
+  background-color:rgb(43, 48, 53);
+  height: 100vh;
 }
 
 .main {
-    height: 100vh;
+  height: 100vh;
+  padding: 0;
 }
 
 i{
-    margin-right: 0.5rem;
+  margin-right: 0.5rem;
 }
 
 .table-button {
-    margin-right:0.5rem;
+  margin-right:0.5rem;
 }
 
 .red {
-    color:red;
+  color:red;
 }
-
+ 
 .loader {
-    border: 2px solid white; /* Light grey */
+  border: 2px solid white; /* Light grey */
   border-top: 2px solid grey; /* Blue */
   border-radius: 50%;
   width: 25px;
@@ -34,16 +35,16 @@ i{
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
+  0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
 #table-container{
-    overflow: scroll;
-    height:95%;
+  overflow: scroll;
+  height:95%;
 }
 
 #file-info {
-    width:"100%"
+  width:"100%"
 }
 

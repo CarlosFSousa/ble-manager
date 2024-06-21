@@ -12,7 +12,7 @@
 <body>
     <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">Ble Scanner v1.0.4</span>
+            <span class="navbar-brand mb-0 h1">Ble Scanner v1.0.5</span>
         </div>
     </nav>
     <div role="main" class="container-fluid">
@@ -33,6 +33,9 @@
                     <label for="setShortname" class="text-light" id="title-shortname">Shortname</label>
                     <input type="text" class="form-control" id="set-shortname">
                 </div>
+                <div class="d-flex justify-content-center mt-3">
+                    <button class="btn btn-dark" id="format-button">Format Device</button>
+                </div>
             </div>
             <div class="main col-8 col-md-8 col-lg-10">
                 <div class="alert alert-danger m-2 text-center" role="alert" id="bluetooth-is-available"
@@ -40,16 +43,12 @@
                     <b><span>This browser does not support bluetooth connection. Try Chrome, Opera or Edge</span></b>
                 </div>
                 <div id="table-container">
-                    <table class="table table-striped" id="table" style="display: none;">
-                        <thead>
-                            <tr>
-                                <th scope="col">Name</th>
-                                <th scope="col">Length</th>
-                                <th scope="col"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-rows">
-                        </tbody>
+                    <table class="table table-striped" id="table">
+                        <tr>
+                            <th scope=" col">Name</th>
+                            <th scope="col">Length</th>
+                            <th scope="col"></th>
+                        </tr>
                     </table>
                 </div>
             </div>
